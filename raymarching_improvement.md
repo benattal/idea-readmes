@@ -49,23 +49,19 @@ where $L_i = \sum_{j \geq i} w_j c_j$ is the remaining radiance at step i.
 
 ## 4. Gradient Expressions
 
-Construct scalars whose partials give the desired gradients. Using overline for detached (stop-gradient) values:
+Construct scalars whose partials give the desired gradients. Overline denotes detached (stop-gradient) values.
 
 **Color**:
-$$
-g_c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c
-$$
-$$
-\partial g_c / \partial c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} = \partial L \cdot w_i
-$$
+
+$g_c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c$
+
+$\partial g_c / \partial c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} = \partial L \cdot w_i$
 
 **Density**:
-$$
-g_\sigma = \overline{\partial L} \cdot ( \bar{T} \cdot \bar{c} - \bar{L} ) \cdot \sigma \cdot \bar{\delta}
-$$
-$$
-\partial g_\sigma / \partial \sigma = \overline{\partial L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta} = \partial L \cdot \delta \cdot (Tc - L_i)
-$$
+
+$g_\sigma = \overline{\partial L} \cdot ( \bar{T} \cdot \bar{c} - \bar{L} ) \cdot \sigma \cdot \bar{\delta}$
+
+$\partial g_\sigma / \partial \sigma = \overline{\partial L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta} = \partial L \cdot \delta \cdot (Tc - L_i)$
 
 ---
 
@@ -74,14 +70,15 @@ $$
 ```
 L = L_forward
 T = 1
+A = ∂L                               # adjoint (from autodiff)
 
 for each point i:
     σ, c = query_scene(p_i)          # tracked
     α = 1 - exp(-σ * δ̄)              # α depends on σ
 
     # Construct gradient expressions
-    g_c = ∂̄L * T̄ * ᾱ * c
-    g_σ = ∂̄L * (T̄ * c̄ - L̄) * σ * δ̄
+    g_c = Ā * T̄ * ᾱ * c
+    g_σ = Ā * (T̄ * c̄ - L̄) * σ * δ̄
 
     # Accumulate gradients
     ∂J/∂c += ∂g_c/∂c
