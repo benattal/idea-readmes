@@ -53,15 +53,23 @@ Construct scalars whose partials give the desired gradients. Overline denotes de
 
 **Color**:
 
-$g_c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c$
+$$
+g_c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c
+$$
 
-$\partial g_c / \partial c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} = \partial L \cdot w_i$
+$$
+\frac{\partial g_c}{\partial c} = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} = \partial L \cdot w_i
+$$
 
 **Density**:
 
-$g_\sigma = \overline{\partial L} \cdot ( \bar{T} \cdot \bar{c} - \bar{L} ) \cdot \sigma \cdot \bar{\delta}$
+$$
+g_\sigma = \overline{\partial L} \cdot ( \bar{T} \cdot \bar{c} - \bar{L} ) \cdot \sigma \cdot \bar{\delta}
+$$
 
-$\partial g_\sigma / \partial \sigma = \overline{\partial L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta} = \partial L \cdot \delta \cdot (Tc - L_i)$
+$$
+\frac{\partial g_\sigma}{\partial \sigma} = \overline{\partial L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta} = \partial L \cdot \delta \cdot (Tc - L_i)
+$$
 
 ---
 
@@ -70,15 +78,15 @@ $\partial g_\sigma / \partial \sigma = \overline{\partial L} \cdot (\bar{T}\bar{
 ```
 L = L_forward
 T = 1
-A = ∂L                               # adjoint (from autodiff)
+∂L = ∂J/∂L                           # adjoint (from autodiff)
 
 for each point i:
     σ, c = query_scene(p_i)          # tracked
     α = 1 - exp(-σ * δ̄)              # α depends on σ
 
     # Construct gradient expressions
-    g_c = Ā * T̄ * ᾱ * c
-    g_σ = Ā * (T̄ * c̄ - L̄) * σ * δ̄
+    g_c = ∂̄L * T̄ * ᾱ * c
+    g_σ = ∂̄L * (T̄ * c̄ - L̄) * σ * δ̄
 
     # Accumulate gradients
     ∂J/∂c += ∂g_c/∂c
