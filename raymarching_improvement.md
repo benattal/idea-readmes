@@ -74,7 +74,7 @@ T = 1
 
 for each point i:
     σ, c = query_scene(p_i)              # tracked
-    α = 1 - exp(-σ * sg(δ))              # α depends on σ
+    α = 1 - exp(-σ * δ)              # α depends on σ
 
     # Construct gradient expression (sg = stop gradient)
     g = sg(∂L * T * α) * c + sg(∂L * (T * c - L) * δ) * σ
