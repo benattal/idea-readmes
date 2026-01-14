@@ -6,25 +6,25 @@ Path replay backpropagation ([Vicini et al. 2021](https://rgl.epfl.ch/publicatio
 
 ## 1. Forward Pass
 
-For ray $\mathbf{r}(t) = \mathbf{o} + t\mathbf{d}$ with $N$ samples, the rendered color is:
+For ray **r**(t) = **o** + t**d** with N samples, the rendered color is:
 
 $$
-C = \sum_{i=1}^{N} T_i \, \alpha_i \, c_i
+L = \sum_{i=1}^{N} T_i \alpha_i c_i
 $$
 
 where:
-- $\alpha_i = 1 - \exp(-\sigma_i \delta_i)$ (opacity)
-- $T_i = \prod_{j=1}^{i-1}(1-\alpha_j)$ (transmittance)
-- $w_i = T_i \alpha_i$ (sample weight)
+- $\alpha_i = 1 - \exp(-\sigma_i \delta_i)$ — opacity
+- $T_i = \prod_{j=1}^{i-1}(1-\alpha_j)$ — transmittance
+- $w_i = T_i \alpha_i$ — sample weight
 
 ---
 
-## 2. Adjoint $\delta C$
+## 2. Adjoint
 
-For any differentiable loss $\mathcal{L}(C)$, compute the adjoint via autodiff:
+For any differentiable loss $J(L)$, compute the adjoint via autodiff:
 
 $$
-\delta C = \frac{\partial \mathcal{L}}{\partial C}
+\partial L = \frac{\partial J}{\partial L}
 $$
 
 ---
@@ -32,44 +32,46 @@ $$
 ## 3. Per-Point Gradients
 
 **Color**: $c_i$ appears linearly, so:
+
 $$
-\frac{\partial C}{\partial c_i} = T_i \alpha_i = w_i
+\frac{\partial L}{\partial c_i} = T_i \alpha_i = w_i
 $$
 
-**Density**: $\sigma_i$ affects both $\alpha_i$ (direct) and $T_j$ for $j > i$ (indirect):
+**Density**: $\sigma_i$ affects both $\alpha_i$ (direct) and $T_j$ for j > i (indirect):
+
 $$
-\frac{\partial C}{\partial \sigma_i} = \delta_i \left( T_i c_i - C_{\text{rem}}^{(i)} \right)
+\frac{\partial L}{\partial \sigma_i} = \delta_i ( T_i c_i - L_i )
 $$
 
-where $C_{\text{rem}}^{(i)} = \sum_{j \geq i} w_j c_j$ is the remaining radiance.
+where $L_i = \sum_{j \geq i} w_j c_j$ is the remaining radiance at step i.
 
 ---
 
-## 4. Gradient Expression $g$
+## 4. Gradient Expression g
 
-Construct a scalar $g$ such that its partials give the desired gradients. Using $\bar{x}$ for detached values:
+Construct a scalar g such that its partials give the desired gradients. Using overline for detached (stop-gradient) values:
 
 $$
-\boxed{g = \bar{\delta C} \cdot \bar{T} \cdot \bar{\alpha} \cdot c \;+\; \bar{\delta C} \cdot \left( \bar{T} \cdot \bar{c} - \bar{C} \right) \cdot \sigma \bar{\delta}}
+g = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c + \overline{\partial L} \cdot ( \bar{T} \cdot \bar{c} - \bar{L} ) \cdot \sigma \cdot \bar{\delta}
 $$
 
 Then:
-- $\frac{\partial g}{\partial c} = \bar{\delta C} \cdot \bar{T} \cdot \bar{\alpha} = \delta C \cdot w_i$
-- $\frac{\partial g}{\partial \sigma} = \bar{\delta C} \cdot (\bar{T}\bar{c} - \bar{C}) \cdot \bar{\delta} = \delta C \cdot \delta \cdot (Tc - C_{\text{rem}})$
+- $\partial g / \partial c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} = \partial L \cdot w_i$
+- $\partial g / \partial \sigma = \overline{\partial L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta} = \partial L \cdot \delta \cdot (Tc - L_i)$
 
 ---
 
 ## 5. Algorithm
 
-**Initialize**: $C \leftarrow C_{\text{forward}}$, $T \leftarrow 1$
+**Initialize**: L = L_forward, T = 1
 
-**For each point $i$**:
+**For each point i**:
 
-1. Query $\sigma, c$ from scene (tracked)
-2. Compute $\alpha = 1 - \exp(-\sigma \cdot \bar{\delta})$
-3. Construct: $g = \bar{\delta C} \cdot \bar{T} \cdot \bar{\alpha} \cdot c + \bar{\delta C} \cdot (\bar{T} \cdot \bar{c} - \bar{C}) \cdot \sigma \bar{\delta}$
-4. Accumulate: $\frac{\partial \mathcal{L}}{\partial \sigma} \mathrel{+}= \frac{\partial g}{\partial \sigma}$, $\quad \frac{\partial \mathcal{L}}{\partial c} \mathrel{+}= \frac{\partial g}{\partial c}$
-5. Update: $C \leftarrow C - \bar{w} \cdot \bar{c}$, $\quad T \leftarrow T \cdot (1 - \bar{\alpha})$
+1. Query σ, c from scene (tracked)
+2. Compute α = 1 − exp(−σ · δ̄)
+3. Construct g (see above)
+4. Accumulate: ∂J/∂σ += ∂g/∂σ, ∂J/∂c += ∂g/∂c
+5. Update: L ← L − w̄ · c̄, T ← T · (1 − ᾱ)
 
 ---
 
