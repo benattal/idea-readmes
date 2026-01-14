@@ -47,28 +47,20 @@ where $L_i = \sum_{j \geq i} w_j c_j$ is the remaining radiance at step i.
 
 ---
 
-## 4. Gradient Expressions
+## 4. Gradient Expression
 
-Construct scalars whose partials give the desired gradients. Overline denotes detached (stop-gradient) values.
-
-**Color**:
+Construct a scalar $g$ whose partials give the desired gradients. Overline denotes detached (stop-gradient) values.
 
 $$
-g_c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c
+g = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c + \overline{\partial L} \cdot ( \bar{T} \cdot \bar{c} - \bar{L} ) \cdot \sigma \cdot \bar{\delta}
 $$
 
 $$
-\frac{\partial g_c}{\partial c} = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} = \partial L \cdot w_i
-$$
-
-**Density**:
-
-$$
-g_\sigma = \overline{\partial L} \cdot ( \bar{T} \cdot \bar{c} - \bar{L} ) \cdot \sigma \cdot \bar{\delta}
+\frac{\partial g}{\partial c} = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} = \partial L \cdot w_i
 $$
 
 $$
-\frac{\partial g_\sigma}{\partial \sigma} = \overline{\partial L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta} = \partial L \cdot \delta \cdot (Tc - L_i)
+\frac{\partial g}{\partial \sigma} = \overline{\partial L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta} = \partial L \cdot \delta \cdot (Tc - L_i)
 $$
 
 ---
@@ -78,23 +70,22 @@ $$
 ```
 L = L_forward
 T = 1
-∂L = ∂J/∂L                           # adjoint (from autodiff)
+∂L = ∂J/∂L                               # adjoint (from autodiff)
 
 for each point i:
-    σ, c = query_scene(p_i)          # tracked
-    α = 1 - exp(-σ * δ̄)              # α depends on σ
+    σ, c = query_scene(p_i)              # tracked
+    α = 1 - exp(-σ * sg(δ))              # α depends on σ
 
-    # Construct gradient expressions
-    g_c = ∂̄L * T̄ * ᾱ * c
-    g_σ = ∂̄L * (T̄ * c̄ - L̄) * σ * δ̄
+    # Construct gradient expression (sg = stop gradient)
+    g = sg(∂L) * sg(T) * sg(α) * c + sg(∂L) * (sg(T) * sg(c) - sg(L)) * σ * sg(δ)
 
     # Accumulate gradients
-    ∂J/∂c += ∂g_c/∂c
-    ∂J/∂σ += ∂g_σ/∂σ
+    ∂J/∂c += ∂g/∂c
+    ∂J/∂σ += ∂g/∂σ
 
-    # Update running values (all detached)
-    L = L - w̄ * c̄
-    T = T * (1 - ᾱ)
+    # Update running values
+    L = L - sg(T * α * c)
+    T = T * sg(1 - α)
 ```
 
 ---
