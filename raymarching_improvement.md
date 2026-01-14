@@ -77,7 +77,7 @@ for each point i:
     α = 1 - exp(-σ * sg(δ))              # α depends on σ
 
     # Construct gradient expression (sg = stop gradient)
-    g = sg(∂L) * sg(T) * sg(α) * c + sg(∂L) * (sg(T) * sg(c) - sg(L)) * σ * sg(δ)
+    g = sg(∂L * T * α) * c + sg(∂L * (T * c - L) * δ) * σ
 
     # Accumulate gradients
     ∂J/∂c += ∂g/∂c
