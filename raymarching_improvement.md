@@ -47,31 +47,50 @@ where $L_i = \sum_{j \geq i} w_j c_j$ is the remaining radiance at step i.
 
 ---
 
-## 4. Gradient Expression g
+## 4. Gradient Expressions
 
-Construct a scalar g such that its partials give the desired gradients. Using overline for detached (stop-gradient) values:
+Construct scalars whose partials give the desired gradients. Using overline for detached (stop-gradient) values:
 
+**Color**:
 $$
-g = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c + \overline{\partial L} \cdot ( \bar{T} \cdot \bar{c} - \bar{L} ) \cdot \sigma \cdot \bar{\delta}
+g_c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c
+$$
+$$
+\partial g_c / \partial c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} = \partial L \cdot w_i
 $$
 
-Then:
-- $\partial g / \partial c = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} = \partial L \cdot w_i$
-- $\partial g / \partial \sigma = \overline{\partial L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta} = \partial L \cdot \delta \cdot (Tc - L_i)$
+**Density**:
+$$
+g_\sigma = \overline{\partial L} \cdot ( \bar{T} \cdot \bar{c} - \bar{L} ) \cdot \sigma \cdot \bar{\delta}
+$$
+$$
+\partial g_\sigma / \partial \sigma = \overline{\partial L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta} = \partial L \cdot \delta \cdot (Tc - L_i)
+$$
 
 ---
 
 ## 5. Algorithm
 
-**Initialize**: L = L_forward, T = 1
+```
+L = L_forward
+T = 1
 
-**For each point i**:
+for each point i:
+    σ, c = query_scene(p_i)          # tracked
+    α = 1 - exp(-σ * δ̄)              # α depends on σ
 
-1. Query σ, c from scene (tracked)
-2. Compute α = 1 − exp(−σ · δ̄)
-3. Construct g (see above)
-4. Accumulate: ∂J/∂σ += ∂g/∂σ, ∂J/∂c += ∂g/∂c
-5. Update: L ← L − w̄ · c̄, T ← T · (1 − ᾱ)
+    # Construct gradient expressions
+    g_c = ∂̄L * T̄ * ᾱ * c
+    g_σ = ∂̄L * (T̄ * c̄ - L̄) * σ * δ̄
+
+    # Accumulate gradients
+    ∂J/∂c += ∂g_c/∂c
+    ∂J/∂σ += ∂g_σ/∂σ
+
+    # Update running values (all detached)
+    L = L - w̄ * c̄
+    T = T * (1 - ᾱ)
+```
 
 ---
 
