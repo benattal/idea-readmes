@@ -52,15 +52,15 @@ where $L_i = \sum_{j \geq i} w_j c_j$ is the remaining radiance at step i.
 Construct a scalar $g$ whose partials give the desired gradients. Overline denotes detached (stop-gradient) values.
 
 $$
-g = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c + \overline{\partial L} \cdot ( \bar{T} \cdot \bar{c} - \bar{L} ) \cdot \sigma \cdot \bar{\delta}
+g = \overline{\partial L} \cdot \bar{T}_i \cdot \bar{\alpha}_i \cdot c_i + \overline{\partial L} \cdot ( \bar{T}_i \cdot \bar{c}_i - \bar{L}_i ) \cdot \sigma_i \cdot \bar{\delta}_i
 $$
 
 $$
-\frac{\partial g}{\partial c} = \overline{\partial L} \cdot \bar{T} \cdot \bar{\alpha} = \partial L \cdot w_i
+\frac{\partial g}{\partial c_i} = \overline{\partial L} \cdot \bar{T}_i \cdot \bar{\alpha}_i = \partial L \cdot w_i
 $$
 
 $$
-\frac{\partial g}{\partial \sigma} = \overline{\partial L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta} = \partial L \cdot \delta \cdot (Tc - L_i)
+\frac{\partial g}{\partial \sigma_i} = \overline{\partial L} \cdot (\bar{T}_i \bar{c}_i - \bar{L}_i) \cdot \bar{\delta}_i = \partial L \cdot \delta_i \cdot (T_i c_i - L_i)
 $$
 
 ---
