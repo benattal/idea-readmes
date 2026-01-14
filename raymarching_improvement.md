@@ -34,13 +34,13 @@ $$
 **Color**: $c_i$ appears linearly, so:
 
 $$
-\frac{\partial L}{\partial c_i} = T_i \alpha_i = w_i
+\frac{\partial J}{\partial c_i} = \frac{\partial J}{\partial L} \cdot \frac{\partial L}{\partial c_i} = \partial L \cdot T_i \alpha_i = \partial L \cdot w_i
 $$
 
 **Density**: $\sigma_i$ affects both $\alpha_i$ (direct) and $T_j$ for j > i (indirect):
 
 $$
-\frac{\partial L}{\partial \sigma_i} = \delta_i ( T_i c_i - L_i )
+\frac{\partial J}{\partial \sigma_i} = \frac{\partial J}{\partial L} \cdot \frac{\partial L}{\partial \sigma_i} = \partial L \cdot \delta_i ( T_i c_i - L_i )
 $$
 
 where $L_i = \sum_{j \geq i} w_j c_j$ is the remaining radiance at step i.
