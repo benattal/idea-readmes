@@ -195,33 +195,34 @@ def backward(ray, δL, L_forward, params):
         δt = step_size
         
         # Detach running values for use in gradient expression
-        T_detach = dr.detach(T)
-        L_detach = dr.detach(L)
-        δL_detach = dr.detach(δL)
-        δt_detach = dr.detach(δt)
-        
+        T_detach = detach(T)
+        L_detach = detach(L)
+        δL_detach = detach(δL)
+        δt_detach = detach(δt)
+
         # Query scene WITH gradient tracking
-        with dr.resume_grad():
-            σ = sample_density(p, params)       # tracked
-            e = sample_color(p, ray.direction, params)  # tracked (emission)
-            
-            # Compute opacity (depends on tracked σ)
-            α = 1.0 - dr.exp(-σ * δt_detach)
-            α_detach = dr.detach(α)
-            e_detach = dr.detach(e)
-            
-            # Construct gradient expression g such that:
-            #   ∂g/∂e = δL · T · α       (color gradient)
-            #   ∂g/∂σ = δL · δt · (Tc - L)  (density gradient)
-            
-            g_color = δL_detach * T_detach * α_detach * e
-            g_density = δL_detach * (T_detach * e_detach - L_detach) * σ * δt_detach
-            
-            g = g_color + g_density
-            
-            # Backpropagate to scene parameters
-            dr.backward_from(g)
-        
+        σ = sample_density(p, params)       # tracked
+        e = sample_color(p, ray.direction, params)  # tracked (emission)
+
+        # Compute opacity (depends on tracked σ)
+        α = 1.0 - exp(-σ * δt_detach)
+        α_detach = detach(α)
+        e_detach = detach(e)
+
+        # Construct gradient expression g such that:
+        #   ∂g/∂e = δL · T · α       (color gradient)
+        #   ∂g/∂σ = δL · δt · (Tc - L)  (density gradient)
+
+        g_color = δL_detach * T_detach * α_detach * e
+        g_density = δL_detach * (T_detach * e_detach - L_detach) * σ * δt_detach
+
+        g = g_color + g_density
+
+        # Accumulate gradients into scene parameters:
+        #   ∂𝓛/∂σ += ∂g/∂σ
+        #   ∂𝓛/∂c += ∂g/∂c
+        backward(g, params)
+
         # Update running values for next iteration (all detached)
         w = T_detach * α_detach
         L = L - w * e_detach
@@ -241,7 +242,7 @@ The expression $g$ is carefully constructed so that:
 | $\frac{\partial \mathcal{L}}{\partial c}$ | $\bar{\delta L} \cdot \bar{T} \cdot \bar{\alpha} \cdot c$ | $\bar{\delta L} \cdot \bar{T} \cdot \bar{\alpha}$ |
 | $\frac{\partial \mathcal{L}}{\partial \sigma}$ | $\bar{\delta L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \sigma\bar{\delta}$ | $\bar{\delta L} \cdot (\bar{T}\bar{c} - \bar{L}) \cdot \bar{\delta}$ |
 
-By detaching everything except the variable we're differentiating with respect to, we isolate each gradient contribution. The `backward_from` call then propagates these gradients through the computational graph to the underlying parameters (grid values, network weights, etc.).
+By detaching everything except the variable we're differentiating with respect to, we isolate each gradient contribution. Taking $\frac{\partial g}{\partial \sigma}$ and $\frac{\partial g}{\partial c}$ then propagates these gradients through the computational graph to the underlying parameters (grid values, network weights, etc.).
 
 ---
 
