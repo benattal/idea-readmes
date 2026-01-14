@@ -1,0 +1,5 @@
+Experiment: transient_experiment
+Grid resolution: 16
+Iterations: 1000
+Final loss: 0.002149
+Initial loss: 0.004186

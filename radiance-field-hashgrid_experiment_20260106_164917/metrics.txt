@@ -1,0 +1,5 @@
+Experiment: experiment
+Grid resolution: 16
+Iterations: 1000
+Final loss: 0.000991
+Initial loss: 0.011090

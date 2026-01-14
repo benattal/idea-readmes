@@ -1,0 +1,151 @@
+_type: ExperimentConfig
+experiment_name: experiment
+output_dir: ./outputs
+method_name: emissive-dt-hashgrid
+cuda_device: '0'
+integrator:
+  _type: EmissiveDTIntegratorConfig
+  _name: Emissive Differential Tracking
+  field:
+    _type: DifferentialTrackingFieldConfig
+    bbox_min:
+    - 0.0
+    - 0.0
+    - 0.0
+    bbox_max:
+    - 1.0
+    - 1.0
+    - 1.0
+    grid_res: 16
+    num_color_channels: 3
+    color_activation: clip
+    normal_epsilon: 0.001
+    use_finite_difference_normals: true
+    random_density_init_scale: 0.01
+    random_sh_init_scale: 0.01
+    random_albedo_init_scale: 0.01
+    density:
+      _type: DensityHashGridConfig
+      grid_res: 128
+      initial_density: 0.01
+      density_activation: relu
+      n_levels: 8
+      n_features_per_level: 2
+      per_level_scale: 1.5
+      base_resolution: 16
+      hash_table_size: 524288
+      mlp_hidden_dim: 64
+      mlp_num_layers: 2
+      random_init_scale: 0.01
+      hash_encoding_init_scale: 10000.0
+      max_density: 100.0
+    emission:
+      _type: SHEmissiveHashGridConfig
+      grid_res: 128
+      sh_degree: 2
+      initial_sh: 0.1
+      color_activation: clip
+      num_color_channels: 3
+      n_levels: 8
+      n_features_per_level: 2
+      per_level_scale: 1.5
+      base_resolution: 16
+      hash_table_size: 524288
+      mlp_hidden_dim: 64
+      mlp_num_layers: 2
+      random_init_scale: 0.01
+      hash_encoding_init_scale: 10000.0
+    majorant:
+      _type: DensityMajorantGridConfig
+      grid_res: 32
+      initial_majorant: 100.0
+      grid_based: false
+      majorant_margin: 0.01
+      majorant_activation: relu
+  optimizer:
+    _type: OptimizerConfig
+    learning_rate: 0.01
+    lr_decay_type: none
+    lr_final: 0.001
+    lr_decay_iterations: -1
+    use_grad_scaler: true
+  spn:
+    _type: SPNConfig
+    starting_alpha: 0.1
+    iterations: 500
+    update_interval: 25
+  loss:
+    _type: LossConfig
+    loss_type: l2
+    color_weight: 1.0
+    opacity_weight: 1.0
+    empty_space_weight: 1.0
+    rawnerf_epsilon: 0.0001
+    rawnerf_exponent: 1.0
+    gradient_scale: 65536.0
+  enable_upsampling: true
+  normal_alignment_weight: 0.0
+  normal_smoothness_weight: 0.0
+  normal_smoothness_offset_scale: 0.01
+  num_color_channels: 3
+  min_step_size: 0.0001
+  min_throughput: 1.0e-06
+  max_num_steps: 10000
+  n_samples_transmittance: 1
+data:
+  _type: DataConfig
+  scene_path: scenes/lego/scene.xml
+  num_train: 100
+  num_test: 100
+  render_res: 256
+  spp: 128
+  force_rerender: false
+  camera:
+    _type: CameraConfig
+    center:
+    - 0.5
+    - 0.5
+    - 0.5
+    radius: 1.3
+    up_vector:
+    - 0.0
+    - 1.0
+    - 0.0
+    hemisphere_normal:
+    - 0.0
+    - 1.0
+    - 0.0
+    fov: 45.0
+    test_min_elevation: 30.0
+    test_max_elevation: 30.0
+    test_num_loops: 1.0
+  seed: 42
+  use_ray_batching: true
+  val_skip: 8
+trainer:
+  _type: TrainerConfig
+  num_stages: 1
+  num_iterations_per_stage: 1000
+  spp: 1
+  backward_spp: 1
+  test_spp: 1
+  use_ray_batching: true
+  rays_per_batch: 4096
+  num_test_images: 10
+  test_subsample_factor: 1
+  eval_interval: 0
+  metrics:
+    _type: MetricsConfig
+    track_loss: true
+    track_psnr: true
+    track_iteration_time: true
+    track_stage_losses: true
+    track_jit_recompilation: false
+  visualize_gradients: false
+  visualize_full_dataset_backward: false
+save_images: true
+save_logs: true
+log_interval: 1
+render_splits:
+- val
+timestamp: '20260106_165758'
